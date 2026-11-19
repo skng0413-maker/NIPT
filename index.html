@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>寶兒安 BlessGD™ & 敏兒安 safeT21express™ 產前基因/微缺失查詢</title>
+  <!-- Load Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Load Inter Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', '"PingFang HK"', '"Microsoft JhengHei"', 'sans-serif'],
+          },
+          colors: {
+            slate: {
+              850: '#172033',
+              925: '#0b1120',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom scrollbar hiding for horizontal category chips */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    mark {
+      background-color: rgba(250, 204, 21, 0.35);
+      color: #fef08a;
+      padding: 0 2px;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-50 font-sans antialiased selection:bg-sky-500/30 selection:text-sky-200 min-h-screen pb-10">
+
+  <!-- Sticky Dark-Themed Header -->
+  <header class="sticky top-0 z-30 bg-slate-950/90 backdrop-blur-md border-b border-slate-800 px-3 sm:px-5 pt-3 pb-3 shadow-lg shadow-slate-950/50">
+    <div class="max-w-5xl mx-auto space-y-2.5">
+      
+      <!-- Top Title & Action Bar -->
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-baseline gap-2">
+          <h1 class="text-base sm:text-lg font-bold tracking-tight text-white">
+            產前基因及微缺失查詢
+          </h1>
+          <span id="subTitle" class="text-xs sm:text-sm font-semibold text-amber-400">
+            全部整合檢索 · 218項
+          </span>
+        </div>
+
+        <div class="flex items-center gap-1.5 sm:gap-2">
+          <button id="copyBtn" type="button" title="複製目前篩選結果"
+            class="px-2.5 py-1.5 text-xs font-medium bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700 hover:border-sky-500/50 rounded-lg transition active:scale-95">
+            複製結果
+          </button>
+          <button id="exportBtn" type="button" title="匯出 JSON 檔案"
+            class="px-2.5 py-1.5 text-xs font-medium bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700 hover:border-sky-500/50 rounded-lg transition active:scale-95">
+            匯出JSON
+          </button>
+          <button id="importBtn" type="button" title="匯入自訂 JSON"
+            class="px-2.5 py-1.5 text-xs font-medium bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700 hover:border-sky-500/50 rounded-lg transition active:scale-95">
+            匯入
+          </button>
+          <input type="file" id="fileInput" accept=".json" class="hidden" />
+          
+          <!-- Live Match Count Badge -->
+          <div id="countBadge"
+            class="px-2.5 py-1 text-xs font-bold tabular-nums rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">
+            218 / 218
+          </div>
+        </div>
+      </div>
+
+      <!-- 4-Mode Panel Switcher: All (218), BlessGD (66), BlessGDT (92), safeT21express (126) -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5 sm:gap-2">
+        <button id="btnAll" type="button" data-mode="ALL"
+          class="py-2 px-2.5 rounded-xl text-xs font-semibold border transition flex items-center justify-center gap-1 bg-amber-500/15 border-amber-400 text-amber-300 shadow-sm">
+          <span>全部整合 (218項)</span>
+        </button>
+        <button id="btnStd" type="button" data-mode="BLESS_STD"
+          class="py-2 px-2.5 rounded-xl text-xs font-semibold border transition flex items-center justify-center gap-1 bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700">
+          <span>BlessGD 單胎 (66)</span>
+        </button>
+        <button id="btnTwins" type="button" data-mode="BLESS_TWINS"
+          class="py-2 px-2.5 rounded-xl text-xs font-semibold border transition flex items-center justify-center gap-1 bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700">
+          <span>BlessGDT 雙胎 (92)</span>
+        </button>
+        <button id="btnSafeT21" type="button" data-mode="SAFET21"
+          class="py-2 px-2.5 rounded-xl text-xs font-semibold border transition flex items-center justify-center gap-1 bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700">
+          <span>safeT21 進階 (126)</span>
+        </button>
+      </div>
+
+      <!-- Real-Time Keyword Search Input -->
+      <div class="relative flex items-center">
+        <svg class="w-4 h-4 text-slate-400 absolute left-3.5 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 1010.5 18a7.5 7.5 0 006.15-3.35z" />
+        </svg>
+        <input type="text" id="searchInput" autocomplete="off"
+          placeholder="輸入關鍵字（如：6、22q11、FGFR3、貓哭、小胖威利、Noonan、微重複...）"
+          class="w-full bg-slate-900 border border-slate-700 focus:border-sky-400 focus:ring-2 focus:ring-sky-400/20 text-slate-100 placeholder-slate-400 text-sm sm:text-base rounded-xl pl-10 pr-10 py-2.5 outline-none transition" />
+        <button id="clearBtn" type="button" title="清除搜尋"
+          class="hidden absolute right-2.5 w-6 h-6 rounded-full bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs items-center justify-center transition">
+          ✕
+        </button>
+      </div>
+
+      <!-- Dynamic Sub-Category Filter Chips -->
+      <div id="filterBar" class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-0.5"></div>
+
+    </div>
+  </header>
+
+  <!-- Main Disease Cards Grid -->
+  <main class="max-w-5xl mx-auto px-3 sm:px-5 pt-3">
+    <div id="diseaseList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5"></div>
+  </main>
+
+  <!-- Non-blocking Toast Message Box -->
+  <div id="toast"
+    class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full bg-slate-900/95 text-sky-400 border border-sky-500/50 shadow-xl text-xs sm:text-sm font-semibold opacity-0 pointer-events-none transition-opacity duration-200">
+    已複製到剪貼簿
+  </div>
+
+  <script>
+    // 1–66: 寶兒安 BlessGD™ 單胎標準版 (34基因 / 66種單基因病)
+    // 67–92: 寶兒安 BlessGDT™ 雙胞胎升級版 (+26種 -> 共92種單基因病)
+    const BLESS_DISEASES = [
+      // === 骨骼發育異常與顱縫早閉 (1–21) ===
+      { id: 1, panel: "BLESS", zh: "軟骨發育不全症（最常見侏儒症）", en: "Achondroplasia", locus: "FGFR3", inh: "AD", cat: "SKEL", catName: "骨骼/顱縫異常", twinsOnly: false },
+      { id: 2, panel: "BLESS", zh: "軟骨發育低下症", en: "Hypochondroplasia", locus: "FGFR3", inh: "AD", cat: "SKEL", catName: "骨骼/顱縫異常", twinsOnly: false },
+      { id: 3, panel: "BLESS", zh: "致死性發育不良 1 型", en: "Thanatophoric dysplasia, type I", locus: "FGFR3", inh: "AD", cat: "SKEL", catName: "骨骼/顱縫異常", twinsOnly: false },
+      { id: 4, panel: "BLESS", zh: "致死性發育不良 2 型", en: "Thanatophoric dysplasia, type II", locus: "FGFR3", inh: "AD", cat: "SKEL", catName: "骨骼/顱縫異常", twinsOnly: false },
+      { id: 5, panel: "BLESS", zh: "Muenke 綜合症（冠狀縫早閉）", en: "Muenke syndrome", locus: "FGFR3", inh: "AD", cat: "SKEL", catName: "骨骼/顱縫異常", twinsOnly: false },
+      { id: 6, panel: "BLESS", zh: "Crouzon 綜合症伴黑棘皮症", en: "Crouzon syndrome with acanthosis nigricans", locus: "FGFR3", inh: "AD", cat: "SKEL", catName: "骨骼/顱縫異常", twinsOnly: false },
+      { id: 7, panel: "BLESS", zh: "嚴重軟骨發育不全伴發育遲緩及黑棘皮症 (SADDAN)", en: "SADDAN dysplasia", locus: "FGFR3", inh: "AD", cat: "SKEL", catName: "骨骼/顱縫異常", twinsOnly: false },
+      { id: 8, panel: "BLESS", zh: "Apert 綜合症（尖頭併指畸形）", en: "Apert syndrome", locus: "FGFR2", inh: "AD", cat: "SKEL", catName: "骨骼/顱縫異常", twinsOnly: false },
+      { id: 9, panel: "BLESS", zh: "Crouzon 綜合症（顱面骨發育不全）", en: "Crouzon syndrome", locus: "FGFR2", inh: "AD", cat: "SKEL", catName: "骨骼/顱縫異常", twinsOnly: false },
+      { id: 10, panel: "BLESS", zh: "Pfeiffer 綜合症", en: "Pfeiffer syndrome", locus: "FGFR2", inh: "AD", cat: "SKEL", catName: "骨骼/顱縫異常", twinsOnly: false },
+      { id: 11, panel: "BLESS", zh: "Jackson-Weiss 綜合症", en: "Jackson-Weiss syndrome", locus: "FGFR2", inh: "AD", cat: "SKEL", catName: "骨骼/顱縫異常", twinsOnly: false },
+      { id: 12, panel: "BLESS", zh: "Beare-Stevenson 腦迴狀頭皮綜合症", en: "Beare-Stevenson cutis gyrata syndrome", locus: "FGFR2", inh: "AD", cat: "SKEL", catName: "骨骼/顱縫異常", twinsOnly: false },
+      { id: 13, panel: "BLESS", zh: "Saethre-Chotzen 綜合症", en: "Saethre-Chotzen syndrome", locus: "TWIST1", inh: "AD", cat: "SKEL", catName: "骨骼/顱縫異常", twinsOnly: false },
+      { id: 14, panel: "BLESS", zh: "成骨不全症 1 型（玻璃骨症）", en: "Osteogenesis imperfecta, type I", locus: "COL1A1", inh: "AD", cat: "SKEL", catName: "骨骼/顱縫異常", twinsOnly: false },
+      { id: 15, panel: "BLESS", zh: "成骨不全症 2 型（圍產期致死型玻璃骨）", en: "Osteogenesis imperfecta, type II", locus: "COL1A1 / COL1A2", inh: "AD", cat: "SKEL", catName: "骨骼/顱縫異常", twinsOnly: false },
+      { id: 16, panel: "BLESS", zh: "成骨不全症 3 型（漸進變形型玻璃骨）", en: "Osteogenesis imperfecta, type III", locus: "COL1A1 / COL1A2", inh: "AD", cat: "SKEL", catName: "骨骼/顱縫異常", twinsOnly: false },
+      { id: 17, panel: "BLESS", zh: "成骨不全症 4 型（中度玻璃骨）", en: "Osteogenesis imperfecta, type IV", locus: "COL1A1 / COL1A2", inh: "AD", cat: "SKEL", catName: "骨骼/顱縫異常", twinsOnly: false },
+      { id: 18, panel: "BLESS", zh: "Ehlers-Danlos 綜合症（關節鬆弛型 7A/7B）", en: "Ehlers-Danlos syndrome, arthrochalasia type", locus: "COL1A1 / COL1A2", inh: "AD", cat: "SKEL", catName: "骨骼/顱縫異常", twinsOnly: false },
+      { id: 19, panel: "BLESS", zh: "2 型膠原蛋白病（軟骨發育不良/Stickler 1型）", en: "Achondrogenesis type II / Stickler syndrome type I", locus: "COL2A1", inh: "AD", cat: "SKEL", catName: "骨骼/顱縫異常", twinsOnly: false },
+      { id: 20, panel: "BLESS", zh: "先天性脊柱骨骺發育不良 (SEDC)", en: "Spondyloepiphyseal dysplasia congenita", locus: "COL2A1", inh: "AD", cat: "SKEL", catName: "骨骼/顱縫異常", twinsOnly: false },
+      { id: 21, panel: "BLESS", zh: "Kniest 發育不良", en: "Kniest dysplasia", locus: "COL2A1", inh: "AD", cat: "SKEL", catName: "骨骼/顱縫異常", twinsOnly: false },
+
+      // === 努南氏症候群及 RAS 通路相關疾病 (22–35) ===
+      { id: 22, panel: "BLESS", zh: "努南氏綜合症 1 型", en: "Noonan syndrome 1", locus: "PTPN11", inh: "AD", cat: "RAS", catName: "努南氏症譜系", twinsOnly: false },
+      { id: 23, panel: "BLESS", zh: "努南氏綜合症伴多發性雀斑 1 型 (LEOPARD 1)", en: "Noonan syndrome with multiple lentigines 1", locus: "PTPN11", inh: "AD", cat: "RAS", catName: "努南氏症譜系", twinsOnly: false },
+      { id: 24, panel: "BLESS", zh: "努南氏綜合症 3 型", en: "Noonan syndrome 3", locus: "KRAS", inh: "AD", cat: "RAS", catName: "努南氏症譜系", twinsOnly: false },
+      { id: 25, panel: "BLESS", zh: "努南氏綜合症 4 型", en: "Noonan syndrome 4", locus: "SOS1", inh: "AD", cat: "RAS", catName: "努南氏症譜系", twinsOnly: false },
+      { id: 26, panel: "BLESS", zh: "努南氏綜合症 5 型", en: "Noonan syndrome 5", locus: "RAF1", inh: "AD", cat: "RAS", catName: "努南氏症譜系", twinsOnly: false },
+      { id: 27, panel: "BLESS", zh: "努南氏綜合症伴多發性雀斑 2 型 (LEOPARD 2)", en: "Noonan syndrome with multiple lentigines 2", locus: "RAF1", inh: "AD", cat: "RAS", catName: "努南氏症譜系", twinsOnly: false },
+      { id: 28, panel: "BLESS", zh: "努南氏綜合症 6 型", en: "Noonan syndrome 6", locus: "NRAS", inh: "AD", cat: "RAS", catName: "努南氏症譜系", twinsOnly: false },
+      { id: 29, panel: "BLESS", zh: "努南氏綜合症 8 型", en: "Noonan syndrome 8", locus: "RIT1", inh: "AD", cat: "RAS", catName: "努南氏症譜系", twinsOnly: false },
+      { id: 30, panel: "BLESS", zh: "努南氏綜合症 13 型", en: "Noonan syndrome 13", locus: "MAP2K1", inh: "AD", cat: "RAS", catName: "努南氏症譜系", twinsOnly: false },
+      { id: 31, panel: "BLESS", zh: "心面皮膚綜合症 1 型 (CFC 1)", en: "Cardiofaciocutaneous syndrome 1", locus: "BRAF", inh: "AD", cat: "RAS", catName: "努南氏症譜系", twinsOnly: false },
+      { id: 32, panel: "BLESS", zh: "心面皮膚綜合症 3 型 (CFC 3)", en: "Cardiofaciocutaneous syndrome 3", locus: "MAP2K1", inh: "AD", cat: "RAS", catName: "努南氏症譜系", twinsOnly: false },
+      { id: 33, panel: "BLESS", zh: "心面皮膚綜合症 4 型 (CFC 4)", en: "Cardiofaciocutaneous syndrome 4", locus: "MAP2K2", inh: "AD", cat: "RAS", catName: "努南氏症譜系", twinsOnly: false },
+      { id: 34, panel: "BLESS", zh: "Costello 綜合症（科斯特洛綜合症）", en: "Costello syndrome", locus: "HRAS", inh: "AD", cat: "RAS", catName: "努南氏症譜系", twinsOnly: false },
+      { id: 35, panel: "BLESS", zh: "努南氏樣綜合症伴生長期頭髮鬆動 1 型", en: "Noonan-like syndrome with loose anagen hair 1", locus: "SHOC2", inh: "AD", cat: "RAS", catName: "努南氏症譜系", twinsOnly: false },
+
+      // === 智力與神經發展障礙、癲癇性腦病 (36–62) ===
+      { id: 36, panel: "BLESS", zh: "雷特氏症（Rett 綜合症）", en: "Rett syndrome", locus: "MECP2", inh: "XLD", cat: "NDD", catName: "智力/神經發展", twinsOnly: false },
+      { id: 37, panel: "BLESS", zh: "MECP2 相關新生兒腦病變", en: "Neonatal encephalopathy due to MECP2", locus: "MECP2", inh: "XL", cat: "NDD", catName: "智力/神經發展", twinsOnly: false },
+      { id: 38, panel: "BLESS", zh: "Dravet 綜合症（嚴重嬰兒肌陣攣性癲癇）", en: "Dravet syndrome", locus: "SCN1A", inh: "AD", cat: "NDD", catName: "智力/神經發展", twinsOnly: false },
+      { id: 39, panel: "BLESS", zh: "發育性及癲癇性腦病變 6B 型 (DEE6B)", en: "Developmental and epileptic encephalopathy 6B", locus: "SCN1A", inh: "AD", cat: "NDD", catName: "智力/神經發展", twinsOnly: false },
+      { id: 40, panel: "BLESS", zh: "遺傳性癲癇伴熱性驚厥附加症 2 型 (GEFS+2)", en: "Generalized epilepsy with febrile seizures plus, type 2", locus: "SCN1A", inh: "AD", cat: "NDD", catName: "智力/神經發展", twinsOnly: false },
+      { id: 41, panel: "BLESS", zh: "發育性及癲癇性腦病變 11 型 (DEE11)", en: "Developmental and epileptic encephalopathy 11", locus: "SCN2A", inh: "AD", cat: "NDD", catName: "智力/神經發展", twinsOnly: false },
+      { id: 42, panel: "BLESS", zh: "良性家族性新生兒/嬰兒癲癇 3 型", en: "Seizures, benign familial infantile, 3", locus: "SCN2A", inh: "AD", cat: "NDD", catName: "智力/神經發展", twinsOnly: false },
+      { id: 43, panel: "BLESS", zh: "發育性及癲癇性腦病變 13 型 (DEE13)", en: "Developmental and epileptic encephalopathy 13", locus: "SCN8A", inh: "AD", cat: "NDD", catName: "智力/神經發展", twinsOnly: false },
+      { id: 44, panel: "BLESS", zh: "發育性及癲癇性腦病變 7 型 (DEE7)", en: "Developmental and epileptic encephalopathy 7", locus: "KCNQ2", inh: "AD", cat: "NDD", catName: "智力/神經發展", twinsOnly: false },
+      { id: 45, panel: "BLESS", zh: "發育性及癲癇性腦病變 4 型 (DEE4)", en: "Developmental and epileptic encephalopathy 4", locus: "STXBP1", inh: "AD", cat: "NDD", catName: "智力/神經發展", twinsOnly: false },
+      { id: 46, panel: "BLESS", zh: "發育性及癲癇性腦病變 2 型 (CDKL5 缺乏症)", en: "Developmental and epileptic encephalopathy 2", locus: "CDKL5", inh: "XLD", cat: "NDD", catName: "智力/神經發展", twinsOnly: false },
+      { id: 47, panel: "BLESS", zh: "常染色體顯性智力障礙 5 型 (SYNGAP1 相關)", en: "Intellectual developmental disorder, autosomal dominant 5", locus: "SYNGAP1", inh: "AD", cat: "NDD", catName: "智力/神經發展", twinsOnly: false },
+      { id: 48, panel: "BLESS", zh: "Coffin-Siris 綜合症 1 型", en: "Coffin-Siris syndrome 1", locus: "ARID1B", inh: "AD", cat: "NDD", catName: "智力/神經發展", twinsOnly: false },
+      { id: 49, panel: "BLESS", zh: "常染色體顯性智力障礙 7 型 (DYRK1A 綜合症)", en: "Intellectual developmental disorder, autosomal dominant 7", locus: "DYRK1A", inh: "AD", cat: "NDD", catName: "智力/神經發展", twinsOnly: false },
+      { id: 50, panel: "BLESS", zh: "常染色體顯性智力障礙 27 型 (GRIN2B 相關)", en: "Intellectual developmental disorder, autosomal dominant 27", locus: "GRIN2B", inh: "AD", cat: "NDD", catName: "智力/神經發展", twinsOnly: false },
+      { id: 51, panel: "BLESS", zh: "發育性及癲癇性腦病變 27 型 (DEE27)", en: "Developmental and epileptic encephalopathy 27", locus: "GRIN2B", inh: "AD", cat: "NDD", catName: "智力/神經發展", twinsOnly: false },
+      { id: 52, panel: "BLESS", zh: "Helsmoortel-Van der Aa 綜合症 (ADNP 綜合症)", en: "Helsmoortel-van der Aa syndrome", locus: "ADNP", inh: "AD", cat: "NDD", catName: "智力/神經發展", twinsOnly: false },
+      { id: 53, panel: "BLESS", zh: "發育性及癲癇性腦病變 94 型 (CHD2 相關)", en: "Developmental and epileptic encephalopathy 94", locus: "CHD2", inh: "AD", cat: "NDD", catName: "智力/神經發展", twinsOnly: false },
+      { id: 54, panel: "BLESS", zh: "Kabuki 綜合症 1 型（歌舞伎面譜綜合症）", en: "Kabuki syndrome 1", locus: "KMT2D", inh: "AD", cat: "NDD", catName: "智力/神經發展", twinsOnly: false },
+      { id: 55, panel: "BLESS", zh: "Cornelia de Lange 綜合症 1 型（德朗熱綜合症）", en: "Cornelia de Lange syndrome 1", locus: "NIPBL", inh: "AD", cat: "NDD", catName: "智力/神經發展", twinsOnly: false },
+      { id: 56, panel: "BLESS", zh: "Sotos 綜合症 1 型（索托斯巨人症）", en: "Sotos syndrome 1", locus: "NSD1", inh: "AD", cat: "NDD", catName: "智力/神經發展", twinsOnly: false },
+      { id: 57, panel: "BLESS", zh: "Rubinstein-Taybi 綜合症 1 型", en: "Rubinstein-Taybi syndrome 1", locus: "CREBBP", inh: "AD", cat: "NDD", catName: "智力/神經發展", twinsOnly: false },
+      { id: 58, panel: "BLESS", zh: "Menke-Hennekam 綜合症 1 型", en: "Menke-Hennekam syndrome 1", locus: "CREBBP", inh: "AD", cat: "NDD", catName: "智力/神經發展", twinsOnly: false },
+      { id: 59, panel: "BLESS", zh: "Mowat-Wilson 綜合症", en: "Mowat-Wilson syndrome", locus: "ZEB2", inh: "AD", cat: "NDD", catName: "智力/神經發展", twinsOnly: false },
+      { id: 60, panel: "BLESS", zh: "Pitt-Hopkins 綜合症", en: "Pitt-Hopkins syndrome", locus: "TCF4", inh: "AD", cat: "NDD", catName: "智力/神經發展", twinsOnly: false },
+      { id: 61, panel: "BLESS", zh: "腦室周圍結節狀異位症 1 型 (PVNH1)", en: "Periventricular nodular heterotopia 1", locus: "FLNA", inh: "XLD", cat: "NDD", catName: "智力/神經發展", twinsOnly: false },
+      { id: 62, panel: "BLESS", zh: "耳腭指綜合症 1 型 / 2 型 (OPD1/OPD2)", en: "Otopalatodigital syndrome, type I / II", locus: "FLNA", inh: "XLD", cat: "NDD", catName: "智力/神經發展", twinsOnly: false },
+
+      // === 結節性硬化症及其他系統結構異常 (63–66) ===
+      { id: 63, panel: "BLESS", zh: "CHARGE 綜合症（多發性先天異常）", en: "CHARGE syndrome", locus: "CHD7", inh: "AD", cat: "OTHER", catName: "其他多系統異常", twinsOnly: false },
+      { id: 64, panel: "BLESS", zh: "結節性硬化症 1 型", en: "Tuberous sclerosis 1", locus: "TSC1", inh: "AD", cat: "OTHER", catName: "其他多系統異常", twinsOnly: false },
+      { id: 65, panel: "BLESS", zh: "結節性硬化症 2 型", en: "Tuberous sclerosis 2", locus: "TSC2", inh: "AD", cat: "OTHER", catName: "其他多系統異常", twinsOnly: false },
+      { id: 66, panel: "BLESS", zh: "神經纖維瘤病 1 型 (NF1)", en: "Neurofibromatosis, type 1", locus: "NF1", inh: "AD", cat: "OTHER", catName: "其他多系統異常", twinsOnly: false },
+
+      // === 雙胞胎升級版 (BlessGDT) 擴增項目 (67–92，共 +26 種) ===
+      { id: 67, panel: "BLESS", zh: "結締組織生長不良（骨質疏鬆-假性神經膠質瘤樣）", en: "Osteogenesis imperfecta / Bone fragility, COL1A2-related", locus: "COL1A2", inh: "AD", cat: "SKEL", catName: "骨骼/顱縫異常", twinsOnly: true },
+      { id: 68, panel: "BLESS", zh: "Stickler 綜合症 2 型（遺傳性進行性關節眼病）", en: "Stickler syndrome, type II", locus: "COL11A1", inh: "AD", cat: "SKEL", catName: "骨骼/顱縫異常", twinsOnly: true },
+      { id: 69, panel: "BLESS", zh: "Marshall 綜合症（馬歇爾綜合症）", en: "Marshall syndrome", locus: "COL11A1", inh: "AD", cat: "SKEL", catName: "骨骼/顱縫異常", twinsOnly: true },
+      { id: 70, panel: "BLESS", zh: "鎖骨顱骨發育不良 (CCD)", en: "Cleidocranial dysplasia", locus: "RUNX2", inh: "AD", cat: "SKEL", catName: "骨骼/顱縫異常", twinsOnly: true },
+      { id: 71, panel: "BLESS", zh: "Apert-Crouzon 相關顱縫早閉（FGFR1 型 Pfeiffer）", en: "Pfeiffer syndrome, FGFR1-related", locus: "FGFR1", inh: "AD", cat: "SKEL", catName: "骨骼/顱縫異常", twinsOnly: true },
+      { id: 72, panel: "BLESS", zh: "低促性腺激素性性腺功能減退症 2 型伴嗅覺喪失 (Kallmann 2)", en: "Hypogonadotropic hypogonadism 2 with anosmia", locus: "FGFR1", inh: "AD", cat: "OTHER", catName: "其他多系統異常", twinsOnly: true },
+      { id: 73, panel: "BLESS", zh: "Hartsfield 綜合症（前腦無裂畸形伴裂手裂足）", en: "Hartsfield syndrome", locus: "FGFR1", inh: "AD", cat: "SKEL", catName: "骨骼/顱縫異常", twinsOnly: true },
+      { id: 74, panel: "BLESS", zh: "Alagille 綜合症 1 型（先天性肝內膽管發育不良）", en: "Alagille syndrome 1", locus: "JAG1", inh: "AD", cat: "OTHER", catName: "其他多系統異常", twinsOnly: true },
+      { id: 75, panel: "BLESS", zh: "法洛氏四聯症（JAG1 相關先天性心臟病）", en: "Tetralogy of Fallot, JAG1-related", locus: "JAG1", inh: "AD", cat: "OTHER", catName: "其他多系統異常", twinsOnly: true },
+      { id: 76, panel: "BLESS", zh: "Holt-Oram 綜合症（心手綜合症）", en: "Holt-Oram syndrome", locus: "TBX5", inh: "AD", cat: "OTHER", catName: "其他多系統異常", twinsOnly: true },
+      { id: 77, panel: "BLESS", zh: "馬凡氏綜合症 (Marfan syndrome)", en: "Marfan syndrome", locus: "FBN1", inh: "AD", cat: "SKEL", catName: "骨骼/顱縫異常", twinsOnly: true },
+      { id: 78, panel: "BLESS", zh: "新生兒馬凡氏綜合症 / 僵硬皮膚綜合症", en: "Stiff skin syndrome / Neonatal Marfan", locus: "FBN1", inh: "AD", cat: "SKEL", catName: "骨骼/顱縫異常", twinsOnly: true },
+      { id: 79, panel: "BLESS", zh: "Weill-Marchesani 綜合症 2 型（球形晶狀體短指畸形）", en: "Weill-Marchesani syndrome 2", locus: "FBN1", inh: "AD", cat: "SKEL", catName: "骨骼/顱縫異常", twinsOnly: true },
+      { id: 80, panel: "BLESS", zh: "Loeys-Dietz 綜合症 1 型（主動脈瘤及顱面異常）", en: "Loeys-Dietz syndrome 1", locus: "TGFBR1", inh: "AD", cat: "OTHER", catName: "其他多系統異常", twinsOnly: true },
+      { id: 81, panel: "BLESS", zh: "Loeys-Dietz 綜合症 2 型", en: "Loeys-Dietz syndrome 2", locus: "TGFBR2", inh: "AD", cat: "OTHER", catName: "其他多系統異常", twinsOnly: true },
+      { id: 82, panel: "BLESS", zh: "努南氏綜合症 7 型 (BRAF 相關)", en: "Noonan syndrome 7", locus: "BRAF", inh: "AD", cat: "RAS", catName: "努南氏症譜系", twinsOnly: true },
+      { id: 83, panel: "BLESS", zh: "努南氏綜合症 9 型 (SOS2 相關)", en: "Noonan syndrome 9", locus: "SOS2", inh: "AD", cat: "RAS", catName: "努南氏症譜系", twinsOnly: true },
+      { id: 84, panel: "BLESS", zh: "努南氏綜合症 10 型 (LZTR1 相關)", en: "Noonan syndrome 10", locus: "LZTR1", inh: "AD", cat: "RAS", catName: "努南氏症譜系", twinsOnly: true },
+      { id: 85, panel: "BLESS", zh: "Angelman 綜合症樣症候群（SLC9A6 / Christianson 型）", en: "Christianson syndrome", locus: "SLC9A6", inh: "XLD", cat: "NDD", catName: "智力/神經發展", twinsOnly: true },
+      { id: 86, panel: "BLESS", zh: "常染色體顯性智力障礙 1 型 (MBD5 相關)", en: "Intellectual developmental disorder, autosomal dominant 1", locus: "MBD5", inh: "AD", cat: "NDD", catName: "智力/神經發展", twinsOnly: true },
+      { id: 87, panel: "BLESS", zh: "Koolen-de Vries 綜合症 (KANSL1 相關)", en: "Koolen-de Vries syndrome", locus: "KANSL1", inh: "AD", cat: "NDD", catName: "智力/神經發展", twinsOnly: true },
+      { id: 88, panel: "BLESS", zh: "Kleefstra 綜合症 1 型 (EHMT1 相關)", en: "Kleefstra syndrome 1", locus: "EHMT1", inh: "AD", cat: "NDD", catName: "智力/神經發展", twinsOnly: true },
+      { id: 89, panel: "BLESS", zh: "Wiedemann-Steiner 綜合症 (KMT2A 相關)", en: "Wiedemann-Steiner syndrome", locus: "KMT2A", inh: "AD", cat: "NDD", catName: "智力/神經發展", twinsOnly: true },
+      { id: 90, panel: "BLESS", zh: "Schinzel-Giedion 綜合症 (SETBP1 相關)", en: "Schinzel-Giedion midface retraction syndrome", locus: "SETBP1", inh: "AD", cat: "NDD", catName: "智力/神經發展", twinsOnly: true },
+      { id: 91, panel: "BLESS", zh: "Cornelia de Lange 綜合症 2 型 (SMC1A 相關)", en: "Cornelia de Lange syndrome 2", locus: "SMC1A", inh: "XLD", cat: "NDD", catName: "智力/神經發展", twinsOnly: true },
+      { id: 92, panel: "BLESS", zh: "神經纖維瘤病 2 型 (NF2 / 雙側聽神經瘤)", en: "Neurofibromatosis, type 2", locus: "NF2", inh: "AD", cat: "OTHER", catName: "其他多系統異常", twinsOnly: true }
+    ];
+
+    // 1–126: Kinetics 敏兒安 safeT21express™ 進階版 微缺失/微重複症候群 (≥3Mb)
+    const SAFET21_CNVS = [
+      { id: 1, panel: "SAFET21", zh: "1p21.3 微缺失綜合症", en: "1p21.3 Microdeletion Syndrome", locus: "1p21.3", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 2, panel: "SAFET21", zh: "1p31 重複綜合症", en: "1p31 Duplication Syndrome", locus: "1p31", cat: "DUP", catName: "微重複/三倍體" },
+      { id: 3, panel: "SAFET21", zh: "1p32-p31 微缺失綜合症", en: "1p32-p31 Microdeletion Syndrome", locus: "1p32-p31", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 4, panel: "SAFET21", zh: "1p36 缺失綜合症", en: "1p36 Deletion Syndrome", locus: "1p36", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 5, panel: "SAFET21", zh: "1q21.1 微缺失綜合症", en: "1q21.1 Microdeletion Syndrome", locus: "1q21.1", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 6, panel: "SAFET21", zh: "1q21.1 微重複綜合症", en: "1q21.1 Microduplication Syndrome", locus: "1q21.1", cat: "DUP", catName: "微重複/三倍體" },
+      { id: 7, panel: "SAFET21", zh: "TAR 綜合症 / 血小板減少-橈骨缺失綜合症", en: "Thrombocytopenia Absent Radius Syndrome", locus: "1q21.1 (TAR)", cat: "NAMED", catName: "命名綜合症/其他" },
+      { id: 8, panel: "SAFET21", zh: "1q41-q42 微缺失綜合症", en: "1q41-q42 Microdeletion Syndrome", locus: "1q41-q42", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 9, panel: "SAFET21", zh: "1q44 微缺失綜合症", en: "1q44 Microdeletion Syndrome", locus: "1q44", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 10, panel: "SAFET21", zh: "2p12-p11.2 缺失綜合症", en: "2p12-p11.2 Deletion Syndrome", locus: "2p12-p11.2", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 11, panel: "SAFET21", zh: "2p16.1-p15 微缺失綜合症", en: "2p16.1-p15 Microdeletion Syndrome", locus: "2p16.1-p15", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 12, panel: "SAFET21", zh: "2q23.1 微缺失綜合症", en: "2q23.1 Microdeletion Syndrome", locus: "2q23.1", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 13, panel: "SAFET21", zh: "2q24 微缺失綜合症", en: "2q24 Microdeletion Syndrome", locus: "2q24", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 14, panel: "SAFET21", zh: "2q31.1 微缺失綜合症 / 裂手裂足症 5 型", en: "2q31.1 Microdeletion Syndrome / Split Hand/Foot Malformation 5", locus: "2q31.1", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 15, panel: "SAFET21", zh: "2q31.1 微重複綜合症", en: "2q31.1 Microduplication Syndrome", locus: "2q31.1", cat: "DUP", catName: "微重複/三倍體" },
+      { id: 16, panel: "SAFET21", zh: "2q32-q33 微缺失綜合症 / 2q33.1 微缺失綜合症", en: "2q32-q33 Microdeletion Syndrome / 2q33.1 Microdeletion Syndrome", locus: "2q32-q33", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 17, panel: "SAFET21", zh: "2q35 重複綜合症", en: "2q35 Duplication Syndrome", locus: "2q35", cat: "DUP", catName: "微重複/三倍體" },
+      { id: 18, panel: "SAFET21", zh: "2q37 微缺失綜合症 / 全前腦症-前腦無裂畸形 6 型", en: "2q37 Microdeletion Syndrome / Holoprosencephaly 6", locus: "2q37", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 19, panel: "SAFET21", zh: "3p-綜合症 / 3pter-p25 缺失綜合症", en: "3p-Syndrome / 3pter-p25 Deletion Syndrome", locus: "3p- / 3pter-p25", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 20, panel: "SAFET21", zh: "3q13.31 缺失綜合症", en: "3q13.31 Deletion Syndrome", locus: "3q13.31", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 21, panel: "SAFET21", zh: "Dandy-Walker 畸形 / Dandy-Walker 綜合症 / 第四腦室孔閉塞綜合症", en: "Isolated Dandy-Walker Malformation", locus: "3q24 (ZIC1/ZIC4)", cat: "NAMED", catName: "命名綜合症/其他" },
+      { id: 22, panel: "SAFET21", zh: "3q26-q27 微缺失綜合症", en: "3q26-q27 Microdeletion Syndrome", locus: "3q26-q27", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 23, panel: "SAFET21", zh: "3q27.3 微缺失綜合症", en: "3q27.3 Microdeletion Syndrome", locus: "3q27.3", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 24, panel: "SAFET21", zh: "3q29 微缺失綜合症 / 3q 亞端粒缺失綜合症", en: "3q29 Microdeletion Syndrome / 3q Subtelomere Deletion Syndrome / 3qter Deletion", locus: "3q29", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 25, panel: "SAFET21", zh: "3q29 微重複綜合症", en: "3q29 Microduplication Syndrome", locus: "3q29", cat: "DUP", catName: "微重複/三倍體" },
+      { id: 26, panel: "SAFET21", zh: "4p-綜合症 / 沃夫-許宏綜合症", en: "4p-Syndrome / Wolf-Hirschhorn Syndrome", locus: "4p16.3 (4p-)", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 27, panel: "SAFET21", zh: "4q21 微缺失綜合症", en: "4q21 Microdeletion Syndrome", locus: "4q21", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 28, panel: "SAFET21", zh: "4q25 近端缺失綜合症", en: "4q25 Proximal Deletion Syndrome", locus: "4q25", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 29, panel: "SAFET21", zh: "4q32.1-q32.2 三倍重複綜合症", en: "4q32.1-q32.2 Triplication Syndrome", locus: "4q32.1-q32.2", cat: "DUP", catName: "微重複/三倍體" },
+      { id: 30, panel: "SAFET21", zh: "5p 缺失綜合症 / 5p 單體症 / 貓哭綜合症", en: "5p Deletion Syndrome / Monosomy 5p / Cri-du-chat Syndrome", locus: "5p15.2 (5p-)", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 31, panel: "SAFET21", zh: "5p13 微重複綜合症", en: "5p13 Microduplication Syndrome", locus: "5p13", cat: "DUP", catName: "微重複/三倍體" },
+      { id: 32, panel: "SAFET21", zh: "5q12 缺失綜合症 / PDE4D 單倍體不足綜合症", en: "5q12 Deletion Syndrome / PDE4D Haploinsufficiency Syndrome", locus: "5q12", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 33, panel: "SAFET21", zh: "5q14.3 微缺失綜合症", en: "5q14.3 Microdeletion Syndrome", locus: "5q14.3", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 34, panel: "SAFET21", zh: "5q23 微缺失綜合症", en: "5q23 Microdeletion Syndrome", locus: "5q23", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 35, panel: "SAFET21", zh: "Sotos 綜合症 1 型 / 大腦性巨人症 / 小兒腦間質綜合症", en: "Sotos Syndrome 1", locus: "5q35 (NSD1)", cat: "NAMED", catName: "命名綜合症/其他" },
+      { id: 36, panel: "SAFET21", zh: "6p25 微缺失綜合症 / 6p 亞端粒缺失綜合症", en: "6p25 Microdeletion Syndrome / 6p Subtelomeric Deletion Syndrome / 6pterp24 Deletion Syndrome", locus: "6p25", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 37, panel: "SAFET21", zh: "6q11-q14 缺失", en: "6q11-q14 Deletion", locus: "6q11-q14", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 38, panel: "SAFET21", zh: "6q16 缺失綜合症", en: "6q16 Deletion Syndrome", locus: "6q16", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 39, panel: "SAFET21", zh: "6q25 微缺失綜合症 / 6q24-q25 缺失綜合症", en: "6q25 Microdeletion Syndrome / 6q24-q25 Deletion Syndrome", locus: "6q24-q25", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 40, panel: "SAFET21", zh: "脊索瘤", en: "CHDM / Chordoma", locus: "6q27 (TBXT)", cat: "NAMED", catName: "命名綜合症/其他" },
+      { id: 41, panel: "SAFET21", zh: "6q 終端缺失綜合症", en: "6q Terminal Deletion Syndrome", locus: "6qter", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 42, panel: "SAFET21", zh: "7p22.1 微重複綜合症", en: "7p22.1 Microduplication Syndrome", locus: "7p22.1", cat: "DUP", catName: "微重複/三倍體" },
+      { id: 43, panel: "SAFET21", zh: "7q 缺失", en: "7q Deletion", locus: "7q", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 44, panel: "SAFET21", zh: "7q11.23 缺失綜合症（威廉氏症候群）", en: "7q11.23 Deletion Syndrome", locus: "7q11.23", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 45, panel: "SAFET21", zh: "7q11.23 重複綜合症", en: "7q11.23 Duplication Syndrome", locus: "7q11.23", cat: "DUP", catName: "微重複/三倍體" },
+      { id: 46, panel: "SAFET21", zh: "7q31 微缺失綜合症", en: "7q31 Microdeletion Syndrome", locus: "7q31", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 47, panel: "SAFET21", zh: "8p23.1 微缺失綜合症", en: "8p23.1 Microdeletion Syndrome", locus: "8p23.1", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 48, panel: "SAFET21", zh: "8p23.1 重複綜合症", en: "8p23.1 Duplication Syndrome", locus: "8p23.1", cat: "DUP", catName: "微重複/三倍體" },
+      { id: 49, panel: "SAFET21", zh: "8q12 微重複綜合症", en: "8q12 Microduplication Syndrome", locus: "8q12", cat: "DUP", catName: "微重複/三倍體" },
+      { id: 50, panel: "SAFET21", zh: "8q12.1-q21.2 缺失綜合症", en: "8q12.1-q21.2 Deletion Syndrome", locus: "8q12.1-q21.2", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 51, panel: "SAFET21", zh: "8q13 微缺失綜合症", en: "8q13 Microdeletion Syndrome", locus: "8q13", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 52, panel: "SAFET21", zh: "8q21.11 微缺失綜合症", en: "8q21.11 Microdeletion Syndrome", locus: "8q21.11", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 53, panel: "SAFET21", zh: "8q22.1 微缺失綜合症", en: "8q22.1 Microdeletion Syndrome", locus: "8q22.1", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 54, panel: "SAFET21", zh: "8q22.1 重複綜合症 / Leri 骨化過早症", en: "8q22.1 Duplication Syndrome / Leri Pleonosteosis", locus: "8q22.1", cat: "DUP", catName: "微重複/三倍體" },
+      { id: 55, panel: "SAFET21", zh: "8q24.1 缺失綜合症 / 毛-鼻-指骨綜合症", en: "8q24.1 Deletion Syndrome / Langer-Giedion Syndrome / Trichorhinophalangeal Syndrome Type 2", locus: "8q24.1", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 56, panel: "SAFET21", zh: "8q24.3 缺失綜合症", en: "8q24.3 Deletion Syndrome", locus: "8q24.3", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 57, panel: "SAFET21", zh: "9p 缺失綜合症 / 9p 單體症", en: "9p Deletion Syndrome / Monosomy 9p", locus: "9p", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 58, panel: "SAFET21", zh: "9p13 微缺失綜合症", en: "9p13 Microdeletion Syndrome", locus: "9p13", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 59, panel: "SAFET21", zh: "9q21 微缺失綜合症", en: "9q21 Microdeletion Syndrome", locus: "9q21", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 60, panel: "SAFET21", zh: "10p 遠端單體症 / 喬治綜合症 2 型", en: "Distal Monosomy 10p / DiGeorge Syndrome 2", locus: "10p14-p13", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 61, panel: "SAFET21", zh: "10q22.3q23.2 微缺失綜合症", en: "10q22.3q23.2 Microdeletion Syndrome", locus: "10q22.3q23.2", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 62, panel: "SAFET21", zh: "10q22.3q23.3 微重複綜合症", en: "10q22.3q23.3 Microduplication Syndrome", locus: "10q22.3q23.3", cat: "DUP", catName: "微重複/三倍體" },
+      { id: 63, panel: "SAFET21", zh: "10q26 缺失綜合症 / 10q 端粒缺失綜合症 / 10q 遠端單體症", en: "10q26 Deletion Syndrome / Telomeric Deletion 10q / Distal Monosomy 10q", locus: "10q26", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 64, panel: "SAFET21", zh: "11p11.2 缺失綜合症 / Potocki-Shaffer 綜合症", en: "11p11.2 Deletion Syndrome / Potocki-Shaffer Syndrome", locus: "11p11.2", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 65, panel: "SAFET21", zh: "WAGR 綜合症", en: "WAGR Syndrome", locus: "11p13 (WAGR)", cat: "NAMED", catName: "命名綜合症/其他" },
+      { id: 66, panel: "SAFET21", zh: "WAGRO 綜合症 / WAGR 綜合症", en: "WAGRO Syndrome / WAGR Syndrome", locus: "11p13 (WAGRO)", cat: "NAMED", catName: "命名綜合症/其他" },
+      { id: 67, panel: "SAFET21", zh: "11q22.2-q22.3 缺失綜合症", en: "11q22.2-q22.3 Deletion Syndrome", locus: "11q22.2-q22.3", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 68, panel: "SAFET21", zh: "11q23 缺失綜合症 / 雅各布森綜合症 / 賈可森綜合症", en: "11q23 Deletion Syndrome / Jacobsen Syndrome", locus: "11q23", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 69, panel: "SAFET21", zh: "12p12.1 微缺失綜合症", en: "12p12.1 Microdeletion Syndrome", locus: "12p12.1", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 70, panel: "SAFET21", zh: "12p13.33 微缺失綜合症 / 12p 遠端單體症", en: "12p13.33 Microdeletion Syndrome / Distal Monosomy 12p", locus: "12p13.33", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 71, panel: "SAFET21", zh: "12q14 微缺失綜合症", en: "12q14 Microdeletion Syndrome", locus: "12q14", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 72, panel: "SAFET21", zh: "12q15-q21.1 微缺失綜合症", en: "12q15-q21.1 Microdeletion Syndrome", locus: "12q15-q21.1", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 73, panel: "SAFET21", zh: "13q12.3 微缺失綜合症", en: "13q12.3 Microdeletion Syndrome", locus: "13q12.3", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 74, panel: "SAFET21", zh: "13q14 缺失綜合症", en: "13q14 Deletion Syndrome", locus: "13q14", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 75, panel: "SAFET21", zh: "13q32 缺失綜合症 / 13q 遠端單體症", en: "13q32 Deletion Syndrome / Distal Monosomy 13q", locus: "13q32", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 76, panel: "SAFET21", zh: "14q11.2 微缺失綜合症 / 14q11-q22 缺失綜合症", en: "14q11.2 Microdeletion Syndrome / 14q11-q22 Deletion Syndrome", locus: "14q11.2", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 77, panel: "SAFET21", zh: "14q12 微缺失綜合症", en: "14q12 Microdeletion Syndrome", locus: "14q12", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 78, panel: "SAFET21", zh: "Frias 綜合症", en: "Frias Syndrome", locus: "14q22.1-q22.3", cat: "NAMED", catName: "命名綜合症/其他" },
+      { id: 79, panel: "SAFET21", zh: "14q32 重複綜合症", en: "14q32 Duplication Syndrome", locus: "14q32", cat: "DUP", catName: "微重複/三倍體" },
+      { id: 80, panel: "SAFET21", zh: "15q11-q13 重複綜合症", en: "15q11-q13 Duplication Syndrome", locus: "15q11-q13", cat: "DUP", catName: "微重複/三倍體" },
+      { id: 81, panel: "SAFET21", zh: "15q11.2 缺失綜合症 / 普瑞德威利綜合症 / 小胖威利綜合症", en: "15q11.2 Deletion Syndrome / Prader-Willi Syndrome", locus: "15q11.2 (PWS)", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 82, panel: "SAFET21", zh: "15q11.2 缺失綜合症 / 天使綜合症 / 天使人綜合症 / 安格曼綜合症", en: "15q11.2 Deletion Syndrome / Angelman Syndrome", locus: "15q11.2 (AS)", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 83, panel: "SAFET21", zh: "15q14 微缺失綜合症", en: "15q14 Microdeletion Syndrome", locus: "15q14", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 84, panel: "SAFET21", zh: "15q24 微缺失綜合症", en: "15q24 Microdeletion Syndrome", locus: "15q24", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 85, panel: "SAFET21", zh: "15q25 缺失綜合症", en: "15q25 Deletion Syndrome", locus: "15q25", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 86, panel: "SAFET21", zh: "15q26 缺失綜合症 / 15q 遠端單體症", en: "15q26 Deletion Syndrome / Distal Monosomy 15q", locus: "15q26", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 87, panel: "SAFET21", zh: "Levy-Shanske 綜合症", en: "Levy-Shanske Syndrome", locus: "15q26.3", cat: "NAMED", catName: "命名綜合症/其他" },
+      { id: 88, panel: "SAFET21", zh: "先天性橫膈膜疝氣疾病", en: "HCD / Hernia, Congenital Diaphragmatic", locus: "15q26.1 (HCD)", cat: "NAMED", catName: "命名綜合症/其他" },
+      { id: 89, panel: "SAFET21", zh: "16p12.2-p11.2 微缺失綜合症", en: "16p12.2-p11.2 Microdeletion Syndrome", locus: "16p12.2-p11.2", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 90, panel: "SAFET21", zh: "16p12.2-p11.2 微重複綜合症", en: "16p12.2-p11.2 Microduplication Syndrome", locus: "16p12.2-p11.2", cat: "DUP", catName: "微重複/三倍體" },
+      { id: 91, panel: "SAFET21", zh: "16p13.3 缺失綜合症", en: "16p13.3 Deletion Syndrome", locus: "16p13.3", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 92, panel: "SAFET21", zh: "16q22 缺失綜合症", en: "16q22 Deletion Syndrome", locus: "16q22", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 93, panel: "SAFET21", zh: "16q24.1 微缺失綜合症", en: "16q24.1 Microdeletion Syndrome", locus: "16q24.1", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 94, panel: "SAFET21", zh: "17p11.2 微缺失綜合症 / 史密斯-馬吉利氏綜合症", en: "17p11.2 Microdeletion Syndrome / Smith-Magenis Syndrome", locus: "17p11.2", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 95, panel: "SAFET21", zh: "17p11.2 微重複綜合症 / Potocki-Lupski 綜合症", en: "17p11.2 Microduplication Syndrome / Potocki-Lupski Syndrome", locus: "17p11.2", cat: "DUP", catName: "微重複/三倍體" },
+      { id: 96, panel: "SAFET21", zh: "17p12-p11.2 微重複綜合症 / Yuan-Harel-Lupski 綜合症", en: "17p12-p11.2 Microduplication Syndrome / Yuan-Harel-Lupski Syndrome", locus: "17p12-p11.2", cat: "DUP", catName: "微重複/三倍體" },
+      { id: 97, panel: "SAFET21", zh: "17p13.3 缺失綜合症", en: "17p13.3 Deletion Syndrome", locus: "17p13.3", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 98, panel: "SAFET21", zh: "17p13.3 微重複綜合症", en: "17p13.3 Microduplication Syndrome", locus: "17p13.3", cat: "DUP", catName: "微重複/三倍體" },
+      { id: 99, panel: "SAFET21", zh: "17q11 微缺失綜合症", en: "17q11 Microdeletion Syndrome", locus: "17q11", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 100, panel: "SAFET21", zh: "17q12 缺失綜合症", en: "17q12 Deletion Syndrome", locus: "17q12", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 101, panel: "SAFET21", zh: "17q12 微重複綜合症", en: "17q12 Microduplication Syndrome", locus: "17q12", cat: "DUP", catName: "微重複/三倍體" },
+      { id: 102, panel: "SAFET21", zh: "17q21.31 重複綜合症", en: "17q21.31 Duplication Syndrome", locus: "17q21.31", cat: "DUP", catName: "微重複/三倍體" },
+      { id: 103, panel: "SAFET21", zh: "17q23.1-23.2 缺失綜合症", en: "17q23.1-23.2 Deletion Syndrome", locus: "17q23.1-23.2", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 104, panel: "SAFET21", zh: "18p-綜合症 / 18p 缺失綜合症 / 18p 單體症", en: "18p-Syndrome / 18p Deletion Syndrome / Monosomy 18p", locus: "18p", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 105, panel: "SAFET21", zh: "18q-綜合症 / 18q 缺失綜合症", en: "18q-Syndrome / 18q Deletion Syndrome", locus: "18q", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 106, panel: "SAFET21", zh: "19q13.11 微缺失綜合症", en: "19q13.11 Microdeletion Syndrome", locus: "19q13.11", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 107, panel: "SAFET21", zh: "20p12.3 微缺失綜合症", en: "20p12.3 Microdeletion Syndrome", locus: "20p12.3", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 108, panel: "SAFET21", zh: "20q11.2 微缺失綜合症", en: "20q11.2 Microdeletion Syndrome", locus: "20q11.2", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 109, panel: "SAFET21", zh: "21q-綜合症 / 21q 缺失綜合症 / 21 單體症", en: "21q-Syndrome / 21q Deletion Syndrome / Monosomy 21", locus: "21q", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 110, panel: "SAFET21", zh: "21q22.11-q22.12 微缺失綜合症", en: "21q22.11-q22.12 Microdeletion Syndrome", locus: "21q22.11-q22.12", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 111, panel: "SAFET21", zh: "21q22.13-q22.2 微缺失綜合症 / 因 21q22.13-q22.2 微缺失引致的 DYRK1A 相關智力障礙綜合症", en: "21q22.13-q22.2 Microdeletion Syndrome / DYRK1A-Related Intellectual Disability Syndrome due to 21q22.13-q22.2 Microdeletion", locus: "21q22.13-q22.2", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 112, panel: "SAFET21", zh: "貓眼綜合症", en: "Cat Eye Syndrome", locus: "22q11.1-q11.2", cat: "DUP", catName: "微重複/三倍體" },
+      { id: 113, panel: "SAFET21", zh: "22q11.2 缺失綜合症 / 22q11DS / 迪喬治綜合症 / 顎心臉綜合症", en: "22q11.2 Deletion Syndrome / 22q11DS / DiGeorge Syndrome / Velocardiofacial Syndrome", locus: "22q11.2", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 114, panel: "SAFET21", zh: "22q11.2 微重複綜合症", en: "22q11.2 Microduplication Syndrome", locus: "22q11.2", cat: "DUP", catName: "微重複/三倍體" },
+      { id: 115, panel: "SAFET21", zh: "22q13 缺失 / 22q13 單體症", en: "22q13 Deletion / Monosomy 22q13", locus: "22q13", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 116, panel: "SAFET21", zh: "22q22.3 缺失綜合症 / 全前腦症-前腦無裂畸形 1 型", en: "22q22.3 Deletion Syndrome / Holoprosencephaly 1", locus: "22q22.3 (21q22.3)", cat: "DEL", catName: "微缺失/單體症" },
+      { id: 117, panel: "SAFET21", zh: "Xp11.3 缺失綜合症 / X-性聯智障-視網膜色素變性綜合症", en: "Xp11.3 Deletion Syndrome / X-linked Intellectual Disability-Retinitis Pigmentosa Syndrome", locus: "Xp11.3", cat: "SEX", catName: "X染色體微缺失/重複" },
+      { id: 118, panel: "SAFET21", zh: "Xp11.23-p11.22 微重複綜合症", en: "Xp11.23-p11.22 Microduplication / Xp11.23-p11.22 Syndrome", locus: "Xp11.23-p11.22", cat: "SEX", catName: "X染色體微缺失/重複" },
+      { id: 119, panel: "SAFET21", zh: "Xp21 缺失綜合症 / Xp21 鄰近基因缺失綜合症", en: "Xp21 Deletion Syndrome / Xp21 Microdeletion Syndrome / Xp21 Contiguous Gene Deletion Syndrome", locus: "Xp21", cat: "SEX", catName: "X染色體微缺失/重複" },
+      { id: 120, panel: "SAFET21", zh: "Xp22.2-p22.13 重複綜合症", en: "Xp22.2-p22.13 Duplication Syndrome", locus: "Xp22.2-p22.13", cat: "SEX", catName: "X染色體微缺失/重複" },
+      { id: 121, panel: "SAFET21", zh: "Xp22.3 微缺失綜合症", en: "Xp22.3 Microdeletion Syndrome", locus: "Xp22.3", cat: "SEX", catName: "X染色體微缺失/重複" },
+      { id: 122, panel: "SAFET21", zh: "Xp28 缺失綜合症 / 霧霧症-矮-頭面-性腺素性-性腺功能低下綜合症", en: "Xp28 Deletion / Moyamoya Angiopathy-Short Stature-Facial Dysmorphism-Hypergonadotropic Hypogonadism Syndrome", locus: "Xp28 (Xq28)", cat: "SEX", catName: "X染色體微缺失/重複" },
+      { id: 123, panel: "SAFET21", zh: "Xq21 缺失綜合症", en: "Xq21 Deletion Syndrome", locus: "Xq21", cat: "SEX", catName: "X染色體微缺失/重複" },
+      { id: 124, panel: "SAFET21", zh: "Xq22.3 端粒缺失綜合症", en: "Xq22.3 Telomeric Deletion Syndrome", locus: "Xq22.3", cat: "SEX", catName: "X染色體微缺失/重複" },
+      { id: 125, panel: "SAFET21", zh: "Xq27.3-q28 重複綜合症", en: "Xq27.3-q28 Duplication Syndrome", locus: "Xq27.3-q28", cat: "SEX", catName: "X染色體微缺失/重複" },
+      { id: 126, panel: "SAFET21", zh: "Xq28 鄰近基因缺失綜合症 / X-性聯肌小管變性-性器官異常綜合症", en: "Xq28 Contiguous Gene Deletion Syndrome / X-linked Myotubular Myopathy-Abnormal Genitalia Syndrome", locus: "Xq28", cat: "SEX", catName: "X染色體微缺失/重複" }
+    ];
+
+    // Combined master dataset (218 items total)
+    let ALL_ITEMS = [...BLESS_DISEASES, ...SAFET21_CNVS];
+
+    // DOM Elements
+    const listEl = document.getElementById("diseaseList");
+    const searchInput = document.getElementById("searchInput");
+    const clearBtn = document.getElementById("clearBtn");
+    const countBadge = document.getElementById("countBadge");
+    const filterBar = document.getElementById("filterBar");
+    const subTitle = document.getElementById("subTitle");
+    const btnAll = document.getElementById("btnAll");
+    const btnStd = document.getElementById("btnStd");
+    const btnTwins = document.getElementById("btnTwins");
+    const btnSafeT21 = document.getElementById("btnSafeT21");
+    const toastEl = document.getElementById("toast");
+
+    // Application State
+    let currentMode = "ALL"; // "ALL" (218), "BLESS_STD" (66), "BLESS_TWINS" (92), "SAFET21" (126)
+    let currentCat = "ALL";
+    let currentQuery = "";
+    let lastFiltered = [];
+    let toastTimer = null;
+
+    // Show non-blocking toast notification
+    function showToast(msg) {
+      toastEl.textContent = msg;
+      toastEl.classList.remove("opacity-0");
+      toastEl.classList.add("opacity-100");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toastEl.classList.remove("opacity-100");
+        toastEl.classList.add("opacity-0");
+      }, 2000);
+    }
+
+    // Escape special characters for safe regex creation
+    function escapeRegExp(str) {
+      return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    }
+
+    // Escape HTML to prevent XSS
+    function escapeHTML(str) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    // Highlight matching substring with <mark>
+    function highlight(text, query) {
+      const safeText = escapeHTML(text);
+      if (!query) return safeText;
+      const safeQuery = escapeHTML(query);
+      const regex = new RegExp(`(${escapeRegExp(safeQuery)})`, "gi");
+      return safeText.replace(regex, "<mark>$1</mark>");
+    }
+
+    // Get category color styling
+    function getCategoryBadgeStyle(cat) {
+      switch (cat) {
+        case "NDD": return "text-purple-400";
+        case "SKEL": return "text-orange-400";
+        case "RAS": return "text-emerald-400";
+        case "OTHER": return "text-pink-400";
+        case "DEL": return "text-rose-400";
+        case "DUP": return "text-cyan-400";
+        case "NAMED": return "text-amber-400";
+        case "SEX": return "text-indigo-400";
+        default: return "text-slate-400";
+      }
+    }
+
+    // Return active dataset pool based on selected panel mode
+    function getActivePool() {
+      if (currentMode === "BLESS_STD") {
+        return ALL_ITEMS.filter(d => d.panel === "BLESS" && !d.twinsOnly);
+      }
+      if (currentMode === "BLESS_TWINS") {
+        return ALL_ITEMS.filter(d => d.panel === "BLESS");
+      }
+      if (currentMode === "SAFET21") {
+        return ALL_ITEMS.filter(d => d.panel === "SAFET21");
+      }
+      return ALL_ITEMS;
+    }
+
+    // Format inheritance / CNV type label
+    function getRightMetaLabel(item) {
+      if (item.panel === "SAFET21") {
+        return "微缺失/重複 ≥3Mb";
+      }
+      if (item.inh === "AD") return "遺傳: 常染色體顯性 (AD)";
+      if (item.inh === "XLD") return "遺傳: X-連鎖顯性 (XLD)";
+      if (item.inh === "XL") return "遺傳: X-連鎖遺傳 (XL)";
+      return `遺傳: ${item.inh}`;
+    }
+
+    // Build dynamic category chips matching the selected panel mode
+    function renderFilterChips() {
+      let chips = [{ cat: "ALL", label: "全部顯示" }];
+
+      if (currentMode === "ALL") {
+        chips.push(
+          { cat: "PANEL_BLESS", label: "僅看寶兒安 BlessGD/T (92)" },
+          { cat: "PANEL_T21", label: "僅看敏兒安 safeT21 (126)" },
+          { cat: "DEL", label: "微缺失/單體症" },
+          { cat: "DUP", label: "微重複/三倍體" },
+          { cat: "NDD", label: "智力/神經發展" },
+          { cat: "SKEL", label: "骨骼/顱縫異常" },
+          { cat: "RAS", label: "努南氏症譜系" }
+        );
+      } else if (currentMode === "BLESS_STD") {
+        chips.push(
+          { cat: "NDD", label: "智力/神經發展障礙" },
+          { cat: "SKEL", label: "骨骼/顱縫早閉異常" },
+          { cat: "RAS", label: "努南氏症候群譜系" },
+          { cat: "OTHER", label: "結節性硬化/其他異常" }
+        );
+      } else if (currentMode === "BLESS_TWINS") {
+        chips.push(
+          { cat: "TWINS_ADD", label: "僅看雙胞胎新增 (+26)" },
+          { cat: "NDD", label: "智力/神經發展障礙" },
+          { cat: "SKEL", label: "骨骼/顱縫早閉異常" },
+          { cat: "RAS", label: "努南氏症候群譜系" },
+          { cat: "OTHER", label: "結節性硬化/其他異常" }
+        );
+      } else if (currentMode === "SAFET21") {
+        chips.push(
+          { cat: "DEL", label: "微缺失/單體症" },
+          { cat: "DUP", label: "微重複/三倍體" },
+          { cat: "NAMED", label: "命名綜合症/其他" },
+          { cat: "SEX", label: "X染色體微缺失/重複" }
+        );
+      }
+
+      // Reset currentCat if invalid for the new mode
+      if (!chips.some(c => c.cat === currentCat)) {
+        currentCat = "ALL";
+      }
+
+      filterBar.innerHTML = chips.map(c => {
+        const isActive = c.cat === currentCat;
+        const activeStyle = isActive
+          ? "bg-sky-500/15 border-sky-500 text-sky-400 font-semibold"
+          : "bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200 font-medium";
+        return `
+          <button type="button" data-cat="${c.cat}"
+            class="chip px-3 py-1.5 rounded-lg text-xs whitespace-nowrap border transition ${activeStyle}">
+            ${c.label}
+          </button>
+        `;
+      }).join("");
+    }
+
+    // Main render loop
+    function render() {
+      const pool = getActivePool();
+      const rawQ = currentQuery.trim();
+      const q = rawQ.toLowerCase();
+
+      if (q) {
+        clearBtn.classList.remove("hidden");
+        clearBtn.classList.add("flex");
+      } else {
+        clearBtn.classList.add("hidden");
+        clearBtn.classList.remove("flex");
+      }
+
+      const filtered = pool.filter(item => {
+        if (currentCat === "PANEL_BLESS" && item.panel !== "BLESS") return false;
+        if (currentCat === "PANEL_T21" && item.panel !== "SAFET21") return false;
+        if (currentCat === "TWINS_ADD" && !item.twinsOnly) return false;
+        if (
+          currentCat !== "ALL" &&
+          currentCat !== "PANEL_BLESS" &&
+          currentCat !== "PANEL_T21" &&
+          currentCat !== "TWINS_ADD" &&
+          item.cat !== currentCat
+        ) {
+          return false;
+        }
+
+        if (!q) return true;
+
+        const padLen = item.panel === "SAFET21" ? 3 : 2;
+        const paddedId = String(item.id).padStart(padLen, "0");
+        const panelKeywords = item.panel === "SAFET21"
+          ? "safet21 safet21express 敏兒安 微缺失 微重複 cnv ≥3mb"
+          : (item.twinsOnly ? "blessgd blessgdt 寶兒安 雙胞胎 twins 92" : "blessgd 寶兒安 單胎 66");
+        const rightMeta = getRightMetaLabel(item);
+
+        const searchable = `${item.id} ${paddedId} #${paddedId} ${item.zh} ${item.en} ${item.locus} ${item.inh || ""} ${rightMeta} ${item.catName} ${panelKeywords}`.toLowerCase();
+        return searchable.includes(q);
+      });
+
+      lastFiltered = filtered;
+      countBadge.textContent = `${filtered.length} / ${pool.length}`;
+
+      if (filtered.length === 0) {
+        listEl.innerHTML = `
+          <div class="col-span-full text-center py-12 px-4 bg-slate-900/50 border border-slate-800 rounded-2xl">
+            <p class="text-slate-400 text-sm">找不到包含「<span class="text-amber-300 font-semibold">${escapeHTML(rawQ)}</span>」的疾病、基因或染色體區段</p>
+            <p class="text-slate-500 text-xs mt-1">請嘗試其他關鍵字，或確認上方已選擇「全部整合 (218項)」</p>
+          </div>
+        `;
+        return;
+      }
+
+      listEl.innerHTML = filtered.map(item => {
+        const isSafeT21 = item.panel === "SAFET21";
+        const padLen = isSafeT21 ? 3 : 2;
+        const paddedId = String(item.id).padStart(padLen, "0");
+        const idStr = highlight(paddedId, rawQ);
+        const zhStr = highlight(item.zh, rawQ);
+        const enStr = highlight(item.en, rawQ);
+        const locusStr = highlight(item.locus, rawQ);
+        const catStr = highlight(item.catName, rawQ);
+        const catColor = getCategoryBadgeStyle(item.cat);
+
+        // Distinct accent border & badge per panel
+        let borderStyle = "border-slate-800 border-l-4 border-l-sky-500";
+        let idColor = "text-sky-400";
+        let panelBadge = `<span class="px-1.5 py-0.5 text-[10px] font-bold rounded bg-sky-500/15 text-sky-300 border border-sky-500/30">BlessGD</span>`;
+
+        if (isSafeT21) {
+          borderStyle = "border-slate-800 border-l-4 border-l-emerald-400";
+          idColor = "text-emerald-400";
+          panelBadge = `<span class="px-1.5 py-0.5 text-[10px] font-bold rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">safeT21</span>`;
+        } else if (item.twinsOnly) {
+          borderStyle = "border-slate-800 border-l-4 border-l-violet-400";
+          idColor = "text-violet-400";
+          panelBadge = `<span class="px-1.5 py-0.5 text-[10px] font-bold rounded bg-violet-500/20 text-violet-300 border border-violet-500/30">BlessGDT+</span>`;
+        }
+
+        return `
+          <article class="bg-slate-900/90 hover:bg-slate-850 border ${borderStyle} rounded-xl p-3 flex flex-col justify-between gap-1.5 transition shadow-sm">
+            <div>
+              <div class="flex items-start justify-between gap-2">
+                <h2 class="text-sm font-semibold text-slate-100 leading-snug">
+                  <span class="${idColor} font-mono text-xs mr-1">#${idStr}</span>${zhStr}
+                </h2>
+                <div class="flex items-center gap-1 shrink-0 flex-wrap justify-end">
+                  ${panelBadge}
+                  <span class="px-1.5 py-0.5 text-[11px] font-mono font-bold rounded bg-slate-800 text-slate-200 border border-slate-700">${locusStr}</span>
+                </div>
+              </div>
+              <p class="text-xs text-slate-400 mt-1 leading-relaxed">${enStr}</p>
+            </div>
+
+            <div class="flex items-center justify-between text-[11px] text-slate-400 pt-1.5 mt-0.5 border-t border-slate-800/80">
+              <span class="${catColor} font-medium">● ${catStr}</span>
+              <span class="text-slate-400">${getRightMetaLabel(item)}</span>
+            </div>
+          </article>
+        `;
+      }).join("");
+    }
+
+    // Switch between 4 Panel Modes
+    function setMode(mode) {
+      currentMode = mode;
+
+      const baseBtn = "py-2 px-2.5 rounded-xl text-xs font-semibold border transition flex items-center justify-center gap-1 bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700";
+      btnAll.className = baseBtn;
+      btnStd.className = baseBtn;
+      btnTwins.className = baseBtn;
+      btnSafeT21.className = baseBtn;
+
+      if (mode === "ALL") {
+        btnAll.className = "py-2 px-2.5 rounded-xl text-xs font-semibold border transition flex items-center justify-center gap-1 bg-amber-500/15 border-amber-400 text-amber-300 shadow-sm";
+        subTitle.textContent = "全部整合檢索 · 218項";
+        subTitle.className = "text-xs sm:text-sm font-semibold text-amber-400";
+      } else if (mode === "BLESS_STD") {
+        btnStd.className = "py-2 px-2.5 rounded-xl text-xs font-semibold border transition flex items-center justify-center gap-1 bg-sky-500/15 border-sky-500 text-sky-400 shadow-sm";
+        subTitle.textContent = "寶兒安 BlessGD 單胎 · 66種單基因病";
+        subTitle.className = "text-xs sm:text-sm font-semibold text-sky-400";
+      } else if (mode === "BLESS_TWINS") {
+        btnTwins.className = "py-2 px-2.5 rounded-xl text-xs font-semibold border transition flex items-center justify-center gap-1 bg-violet-500/15 border-violet-400 text-violet-300 shadow-sm";
+        subTitle.textContent = "寶兒安 BlessGDT 雙胞胎 · 92種單基因病";
+        subTitle.className = "text-xs sm:text-sm font-semibold text-violet-300";
+      } else if (mode === "SAFET21") {
+        btnSafeT21.className = "py-2 px-2.5 rounded-xl text-xs font-semibold border transition flex items-center justify-center gap-1 bg-emerald-500/15 border-emerald-400 text-emerald-300 shadow-sm";
+        subTitle.textContent = "敏兒安 safeT21express™ 進階版 · 126種微缺失/重複 (≥3Mb)";
+        subTitle.className = "text-xs sm:text-sm font-semibold text-emerald-400";
+      }
+
+      renderFilterChips();
+      render();
+    }
+
+    // Event Listeners
+    btnAll.addEventListener("click", () => setMode("ALL"));
+    btnStd.addEventListener("click", () => setMode("BLESS_STD"));
+    btnTwins.addEventListener("click", () => setMode("BLESS_TWINS"));
+    btnSafeT21.addEventListener("click", () => setMode("SAFET21"));
+
+    searchInput.addEventListener("input", (e) => {
+      currentQuery = e.target.value;
+      render();
+    });
+
+    clearBtn.addEventListener("click", () => {
+      searchInput.value = "";
+      currentQuery = "";
+      searchInput.focus();
+      render();
+    });
+
+    filterBar.addEventListener("click", (e) => {
+      const btn = e.target.closest(".chip");
+      if (!btn) return;
+      currentCat = btn.dataset.cat;
+      renderFilterChips();
+      render();
+    });
+
+    // Copy filtered results using fallback-safe textarea + document.execCommand('copy')
+    document.getElementById("copyBtn").addEventListener("click", () => {
+      if (lastFiltered.length === 0) {
+        showToast("目前沒有可複製的篩選結果");
+        return;
+      }
+      const modeNames = {
+        ALL: "全部整合檢索 (BlessGD/T + safeT21express)",
+        BLESS_STD: "寶兒安 BlessGD™ 單胎標準版",
+        BLESS_TWINS: "寶兒安 BlessGDT™ 雙胞胎升級版",
+        SAFET21: "敏兒安 safeT21express™ 進階版 (≥3Mb)"
+      };
+      const headerLine = `【${modeNames[currentMode]}】共 ${lastFiltered.length} 項結果${currentQuery.trim() ? `（關鍵字：${currentQuery.trim()}）` : ""}`;
+      const lines = lastFiltered.map(d => {
+        const tag = d.panel === "SAFET21" ? "safeT21" : (d.twinsOnly ? "BlessGDT+" : "BlessGD");
+        const padLen = d.panel === "SAFET21" ? 3 : 2;
+        return `[${tag}] #${String(d.id).padStart(padLen, "0")} [${d.locus}] ${d.zh} (${d.en})`;
+      });
+      const textToCopy = [headerLine, ...lines].join("\n");
+
+      const textarea = document.createElement("textarea");
+      textarea.value = textToCopy;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand("copy");
+        showToast(`已複製 ${lastFiltered.length} 筆資料`);
+      } catch (err) {
+        showToast("複製失敗，請手動選取");
+      } finally {
+        document.body.removeChild(textarea);
+      }
+    });
+
+    // Export JSON
+    document.getElementById("exportBtn").addEventListener("click", () => {
+      try {
+        const blob = new Blob([JSON.stringify(ALL_ITEMS, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "blessgd_safet21_218_items.json";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast("已匯出完整 218 項 JSON 檔案");
+      } catch (err) {
+        showToast("匯出失敗");
+      }
+    });
+
+    // Import JSON
+    const fileInput = document.getElementById("fileInput");
+    document.getElementById("importBtn").addEventListener("click", () => fileInput.click());
+    fileInput.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          const parsed = JSON.parse(ev.target.result);
+          if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].zh && (parsed[0].locus || parsed[0].gene)) {
+            ALL_ITEMS = parsed.map(item => ({
+              ...item,
+              panel: item.panel || "BLESS",
+              locus: item.locus || item.gene
+            }));
+            render();
+            showToast(`成功匯入 ${ALL_ITEMS.length} 筆資料`);
+          } else {
+            showToast("JSON 格式不符（需包含 zh 與 locus/gene 欄位）");
+          }
+        } catch (err) {
+          showToast("無法解析 JSON 檔案");
+        }
+      };
+      reader.readAsText(file);
+      fileInput.value = "";
+    });
+
+    // Initial render
+    setMode("ALL");
+  </script>
+</body>
+</html>
